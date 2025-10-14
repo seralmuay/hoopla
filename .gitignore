@@ -14,3 +14,7 @@ data/
 
 # macOS
 .DS_Store
+
+# cache files
+cache/
+*.log
