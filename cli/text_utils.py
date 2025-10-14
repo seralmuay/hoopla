@@ -26,14 +26,16 @@ class TextUtils:
 
     def tokenize(self, text: str) -> list[str]:
         tokens = self.remove_stopwords((self.remove_punctuation(text).lower().split()))
-        # return [self.stemmer.stem(token) for token in tokens]
-        #tokens = self.remove_punctuation(text).lower().split()
-        return tokens
+        return [self.stemmer.stem(token) for token in tokens]
 
     def token_match(self, query: str, text: str) -> bool:
         query_tokens = self.tokenize(query)
         text_tokens = self.tokenize(text)
         return not query_tokens.isdisjoint(text_tokens)
+    
+    def stem_text(self, text:str) -> str:
+        return self.stemmer.stem(text)
+        
 
     @staticmethod
     def load_movies(path="data/movies.json") -> dict:
