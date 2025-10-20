@@ -1,5 +1,7 @@
+import json
 import numpy as np
 from sentence_transformers import SentenceTransformer
+from lib.chunk_utils import semantic_chunk
 
 class SemanticSearch:
     def __init__(self):
@@ -63,6 +65,100 @@ class SemanticSearch:
 
         return formatted_results
             
+class ChunkedSemanticSearch(SemanticSearch):
+    def __init__(self) -> None:
+        super().__init__()
+        self.chunk_embeddings = None
+        self.chunk_metadata = None
+    
+    def build_chunk_embeddings(self, documents):
+        self.documents = documents
+        self.document_map = {i: doc for i, doc in enumerate(documents)}
+        all_chunks = []
+        chunk_metadata = []
+        for doc_id, doc in enumerate(documents):
+            if doc['description'] is None or doc['description'].strip() == "":
+                continue
+            chunks = semantic_chunk(doc['description'], max_chunk_size=4, overlap=1)
+            total_chunks = len(chunks)
+            for ichunk, chunk in enumerate(chunks):
+                all_chunks.append(chunk)
+                chunk_metadata.append({
+                    'movie_idx': doc['id'],
+                    'chunk_idx': ichunk,
+                    'total_chunks': total_chunks
+                })
+        
+        # Encode all chunks at once
+        self.chunk_embeddings = self.model.encode(all_chunks, show_progress_bar=True)
+        self.chunk_metadata = chunk_metadata
+
+        try:
+            with open('cache/movie_chunk_embeddings.npy', 'wb') as f:
+                np.save(f, self.chunk_embeddings)
+
+            with open('cache/chunk_metadata.json', 'w') as f:
+                json.dump({"chunks": chunk_metadata, "total_chunks": len(all_chunks)}, f, indent=2)
+        except Exception as e:
+            raise IOError(f"Failed to save chunk embeddings or metadata to cache: {e}")
+
+        return self.chunk_embeddings
+    
+    def load_or_create_chunk_embeddings(self, documents: list[dict]) -> np.ndarray:
+        self.documents = documents
+        self.document_map = {i: doc for i, doc in enumerate(documents)}
+        try:
+            with open('cache/movie_chunk_embeddings.npy', 'rb') as f:
+                self.chunk_embeddings = np.load(f)
+            
+            with open('cache/chunk_metadata.json', 'r') as f:
+                metadata = json.load(f)
+                self.chunk_metadata = metadata['chunks']
+            print(f"Loaded {len(self.chunk_embeddings)} chunk embeddings and {len(self.chunk_metadata)} metadata entries from cache.")
+        except FileNotFoundError:
+            print("Chunk embeddings or metadata cache not found, building new chunk embeddings...")
+            return self.build_chunk_embeddings(documents)
+        except Exception as e:
+            print("Failed to load chunk embeddings or metadata from cache, rebuilding...")
+            return self.build_chunk_embeddings(documents)
+
+        return self.chunk_embeddings
+    
+    def search_chunks(self, query: str, limit: int = 10):
+        if self.chunk_embeddings is None:
+            raise ValueError("No chunk embeddings loaded. Call `load_or_create_chunk_embeddings` first.")
+        
+        query_embedding = self.generate_embedding(query)
+        results = []
+        movie_scores = {}
+        #print(f"Searching {len(self.chunk_embeddings)} chunk embeddings for query: {query}")
+        for i, chunk_emb in enumerate(self.chunk_embeddings):
+            score = cosine_similarity(query_embedding, chunk_emb)
+            metadata = self.chunk_metadata[i]
+            #print({'chunk_idx': metadata['chunk_idx'], "movie_idx": metadata['movie_idx'], 'score': score})
+            movie_idx = self.documents.index(next(doc for doc in self.documents if doc['id'] == metadata['movie_idx']))
+            #print(f"Movie index in documents: {movie_idx}")
+            if movie_idx not in movie_scores or score > movie_scores[movie_idx]:
+                movie_scores[movie_idx] = score
+            results.append({'chunk_idx': metadata['chunk_idx'], "movie_idx": movie_idx, 'score': score})
+            # movie_idx: The index of the document in self.documents (you'll need to use self.chunk_metadata to map back to this)
+        
+        sorted_movie_scores = sorted(movie_scores.items(), key=lambda x: x[1], reverse=True)
+        
+        top_movies = sorted_movie_scores[:limit]
+        final_results = []
+        for movie_idx, score in top_movies:
+            document = self.documents[movie_idx]
+            final_results.append(format_search_result(score, document))
+        
+        return final_results
+    
+def format_search_result(score, document):
+    return {
+        'score': score,
+        'title': document['title'],
+        'description': document['description'][:100]
+    }
 
 
 def verify_model():
