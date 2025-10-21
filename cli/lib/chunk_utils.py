@@ -119,6 +119,11 @@ def semantic_chunk(text: str, max_chunk_size: int = 4, overlap: int = 0) -> list
     # Normalize text by replacing newlines with spaces and removing leading/trailing whitespace
     normalized_text = text.replace('\n', ' ').strip()
     total_characters = len(normalized_text)
+
+    if total_characters == 0:
+        print(f"Semantically chunking {total_characters} characters")
+        print("  No text provided.")
+        return []
     
     # Split text into sentences using regex
     sentences = re.split(r"(?<=[.!?])\s+", normalized_text)
