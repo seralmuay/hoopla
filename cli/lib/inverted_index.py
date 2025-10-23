@@ -1,13 +1,14 @@
 import os
 import pickle
 import math
-from text_utils import TextUtils
+from cli.text_utils import TextUtils
 from collections import Counter
-from search_utils import BM25_K1, BM25_B
+from cli.search_utils import BM25_K1, BM25_B
 
 
 class InvertedIndex:
     def __init__(self):
+        self.index_path = "cache/index.pkl"
         self.index: dict[str, set[int]] = {}
         self.docmap: dict[int, dict] = {}
         self.term_frequencies: dict[int, Counter] = {}
@@ -149,4 +150,3 @@ class InvertedIndex:
 
         except FileNotFoundError:
             raise FileNotFoundError("Cache files not found. Please build the index first.")
-

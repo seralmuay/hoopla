@@ -1,7 +1,15 @@
-
 import os
 import re
-from lib.chunk_utils import chunk_text
+import sys
+from pathlib import Path
+
+# Add the project root to the Python path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
+from cli.lib.chunk_utils import chunk_text
+from cli.lib.hybrid_search import HybridSearch
+
 
 def add_vectors(vector1, vector2):
     if len(vector1) != len(vector2):
@@ -62,7 +70,8 @@ def semantic_chunk_text(
         print(f"{i + 1}. {chunk}")
 
 def main() -> None: 
-    semantic_chunk_text("First sentence here. Second sentence here. Third sentence here. Fourth sentence here.", max_chunk_size=2, overlap=1)
+    hybrid_score = HybridSearch.hybrid_score(10.49, 0.4980, alpha=0.5)
+    print(f"Hybrid Score: {hybrid_score:.4f}")
             
 if __name__ == "__main__":
     main()

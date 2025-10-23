@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 
 import argparse
+import sys
+from pathlib import Path
+
+# Add the project root to the Python path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
 def main():
     parser = argparse.ArgumentParser(description="Semantic Search CLI")
@@ -40,23 +46,23 @@ def main():
 
     match args.command:
         case "verify":
-            from lib.semantic_search import verify_model
+            from cli.lib.semantic_search import verify_model
             verify_model()
         
         case "embed_text":
-            from lib.semantic_search import embed_text
+            from cli.lib.semantic_search import embed_text
             embed_text(args.text)
 
         case "verify_embeddings":
-            from lib.semantic_search import verify_embeddings
+            from cli.lib.semantic_search import verify_embeddings
             verify_embeddings()
 
         case "embedquery":
-            from lib.semantic_search import embed_query_text
+            from cli.lib.semantic_search import embed_query_text
             embed_query_text(args.query)
 
         case "search":
-            from lib.semantic_search import SemanticSearch, load_documents
+            from cli.lib.semantic_search import SemanticSearch, load_documents
             semantic_search = SemanticSearch()
             documents = load_documents()
             semantic_search.load_or_create_embeddings(documents)
@@ -69,15 +75,15 @@ def main():
                 print("\n")
 
         case "chunk":
-            from lib.chunk_utils import chunk_text
+            from cli.lib.chunk_utils import chunk_text
             chunk_text(args.text, chunk_size=args.chunk_size, overlap=args.overlap)
             
         case "semantic_chunk":
-            from lib.chunk_utils import semantic_chunk
+            from cli.lib.chunk_utils import semantic_chunk
             semantic_chunk(args.text, max_chunk_size=args.max_chunk_size, overlap=args.overlap)
 
         case "embed_chunks":
-            from lib.semantic_search import load_documents, ChunkedSemanticSearch
+            from cli.lib.semantic_search import load_documents, ChunkedSemanticSearch
             documents = load_documents()
             print(f"Loaded documents for chunked embedding {len(documents)}")
             chunked_search = ChunkedSemanticSearch()
@@ -86,7 +92,7 @@ def main():
             print(f"Generated {len(embeddings)} chunked embeddings")
 
         case "search_chunked":
-            from lib.semantic_search import ChunkedSemanticSearch, load_documents
+            from cli.lib.semantic_search import ChunkedSemanticSearch, load_documents
             documents = load_documents()
             chunked_search = ChunkedSemanticSearch()
             chunked_search.load_or_create_chunk_embeddings(documents)

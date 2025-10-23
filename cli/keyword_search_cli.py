@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 
 import argparse
-from inverted_index import InvertedIndex
-from text_utils import TextUtils
-from search_utils import BM25_K1, BM25_B
+import sys
+from pathlib import Path
+
+# Add the project root to the Python path
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
+from cli.lib.inverted_index import InvertedIndex
+from cli.text_utils import TextUtils
+from cli.search_utils import BM25_K1, BM25_B
 
 def main() -> None:
 

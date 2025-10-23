@@ -1,7 +1,7 @@
 import json
 import numpy as np
 from sentence_transformers import SentenceTransformer
-from lib.chunk_utils import semantic_chunk
+from cli.lib.chunk_utils import semantic_chunk
 
 class SemanticSearch:
     def __init__(self):
@@ -157,7 +157,8 @@ def format_search_result(score, document):
     return {
         'score': score,
         'title': document['title'],
-        'description': document['description'][:100]
+        'description': document['description'][:100],
+        'id': document['id']
     }
 
 
