@@ -57,6 +57,9 @@ def main() -> None:
     rrf_parser.add_argument(
         "--limit", type=int, default=5, help="Number of results to return (default=5)"
     )
+    rrf_parser.add_argument(
+    "--evaluate", action='store_true', help="Evaluate the search results"
+    )
 
     args = parser.parse_args()
 
@@ -86,8 +89,10 @@ def main() -> None:
                 print()
         case "rrf-search":
             result = rrf_search_command(
-                args.query, args.k, args.enhance, args.rerank_method, args.limit
+                args.query, args.k, args.enhance, args.rerank_method, args.evaluate, args.limit
             )
+
+            print(f"OriginalQuery received at rrf_search_cli: {args.query}")
 
             if result["enhanced_query"]:
                 print(
@@ -112,6 +117,8 @@ def main() -> None:
                 if "cross_encoder_score" in res:
                     print(f"   Cross Encoder Score: {res.get('cross_encoder_score', 0):.3f}")
                 print(f"   RRF Score: {res.get('score', 0):.3f}")
+                if "relevant_score" in res:
+                    print(f"   Relevant Score: {res.get('relevant_score', 0)}/3")
                 metadata = res.get("metadata", {})
                 ranks = []
                 if metadata.get("bm25_rank"):
@@ -122,6 +129,7 @@ def main() -> None:
                     print(f"   {', '.join(ranks)}")
                 print(f"   {res['document'][:100]}...")
                 print()
+                
         case _:
             parser.print_help()
 

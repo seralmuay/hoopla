@@ -1,9 +1,11 @@
+import json
 import os
 from typing import Optional
+import numpy as np
 
 from .keyword_search import InvertedIndex
 from .query_enhancement import enhance_query
-from .reranking import rerank
+from .reranking import rerank, llm_relevant_evaluation
 from .search_utils import (
     DEFAULT_ALPHA,
     DEFAULT_SEARCH_LIMIT,
@@ -204,6 +206,7 @@ def rrf_search_command(
     k: int = RRF_K,
     enhance: Optional[str] = None,
     rerank_method: Optional[str] = None,
+    evaluate: bool = False,
     limit: int = DEFAULT_SEARCH_LIMIT,
 ) -> dict:
     movies = load_movies()
@@ -223,6 +226,9 @@ def rrf_search_command(
         results = rerank(query, results, method=rerank_method, limit=limit)
         reranked = True
 
+    if evaluate:
+        results = llm_relevant_evaluation(query, results)
+    
     return {
         "original_query": original_query,
         "enhanced_query": enhanced_query,

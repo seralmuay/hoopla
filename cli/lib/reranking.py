@@ -106,6 +106,37 @@ def llm_rerank_cross_encoder(query: str, documents: list[dict], limit: int = 5) 
     documents.sort(key=lambda x: x["cross_encoder_score"], reverse=True)
     return documents[:limit]
 
+def llm_relevant_evaluation(query: str, results: list[dict]) -> list[dict]:
+
+    formatted_results = [f"{i+1}. {res['title']}\n{res['document']}" for i, res in enumerate(results)]
+
+    prompt = f"""Rate how relevant each result is to this query on a 0-3 scale:
+
+                Query: "{query}"
+
+                Results:
+                {chr(10).join(formatted_results)}
+
+                Scale:
+                - 3: Highly relevant
+                - 2: Relevant
+                - 1: Marginally relevant
+                - 0: Not relevant
+
+                Do NOT give any numbers out than 0, 1, 2, or 3.
+
+                Return ONLY the scores in the same order you were given the documents. Return a valid JSON list, nothing else. For example:
+
+                [2, 0, 3, 2, 0, 1]"""
+
+    response = client.models.generate_content(model=model, contents=prompt)
+    relevant_scores_text = strip_markdown_fences(response.text)
+    relevant_scores = json.loads(relevant_scores_text)
+
+    for i, score in enumerate(relevant_scores):
+        results[i]["relevant_score"] = score
+
+    return results
     
 def strip_markdown_fences(text: str) -> str:
         """Remove markdown code fences from LLM response if present."""
