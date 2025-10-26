@@ -9,6 +9,7 @@ dependencies = [
     "google-genai>=1.45.0",
     "nltk==3.9.1",
     "numpy<2",
+    "pillow>=12.0.0",
     "python-dotenv>=1.1.1",
     "sentence-transformers>=5.1.1",
     "torch==2.2.2",
